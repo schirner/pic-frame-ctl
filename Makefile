@@ -8,6 +8,7 @@ COMPONENT_DIR := $(PROJECT_DIR)/custom_components/$(COMPONENT_NAME)
 TEST_DATA_DIR := /tmp/picture_frame_test
 HA_CONFIG_DIR := $(HA_CORE_DIR)/config
 DEVCONTAINER_FILE := $(HA_CORE_DIR)/.devcontainer/devcontainer.json
+SCRIPTS_DIR := $(PROJECT_DIR)/scripts
 
 # Colors
 CYAN := \033[0;36m
@@ -77,17 +78,15 @@ test-data:
 		done; \
 	done
 
-# Setup mounts by directly modifying devcontainer.json
+# Setup mounts using the external Python script
 setup-mounts: ha-core
-	@echo "$(GREEN)Setting up mounts in devcontainer.json...$(NC)"
-	@if grep -q "\"mounts\":" "$(DEVCONTAINER_FILE)"; then \
-		echo "$(YELLOW)Mounts section already exists, updating...$(NC)"; \
-		# For simplicity, we'll remove and re-add the mounts section to avoid complex sed replacements \
-		sed -i '/^  "mounts": \[/,/^  \],/d' "$(DEVCONTAINER_FILE)"; \
-	fi
-	@# Insert the mounts section after runArgs section
-	@sed -i '/^  "runArgs": \[/,/^  \],/s/^  \],/  \],\n  "mounts": [\n    "source=$(COMPONENT_DIR),target=\/workspaces\/home-assistant-core\/custom_components\/$(COMPONENT_NAME),type=bind,consistency=cached",\n    "source=$(TEST_DATA_DIR),target=\/tmp\/picture_frame_test,type=bind,consistency=cached",\n    "source=$(HA_CONFIG_DIR),target=\/workspaces\/home-assistant-core\/config,type=bind,consistency=cached"\n  ],/' "$(DEVCONTAINER_FILE)"
-	@echo "$(GREEN)Mounts configured in $(DEVCONTAINER_FILE)$(NC)"
+	@echo "$(GREEN)Setting up mounts in devcontainer.json using Python script...$(NC)"
+	@python3 "$(SCRIPTS_DIR)/configure_devcontainer.py" \
+		"$(DEVCONTAINER_FILE)" \
+		"$(COMPONENT_DIR)" \
+		"$(COMPONENT_NAME)" \
+		"$(TEST_DATA_DIR)" \
+		"$(HA_CONFIG_DIR)"
 
 # VS Code task - optional helper
 vs-code: ha-core
