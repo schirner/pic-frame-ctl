@@ -140,19 +140,34 @@ class DatabaseManager:
         cursor = self._conn.cursor()
         
         try:
-            cursor.execute(
-                """
-                INSERT INTO albums (path, name, year, month, created_at)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT (path) DO UPDATE SET
-                    name = excluded.name,
-                    year = excluded.year,
-                    month = excluded.month
-                RETURNING id
-                """,
-                (path, name, year, month, datetime.now().isoformat())
-            )
-            album_id = cursor.fetchone()[0]
+            # First check if the album exists
+            cursor.execute("SELECT id FROM albums WHERE path = ?", (path,))
+            existing_album = cursor.fetchone()
+            
+            if existing_album:
+                # Update the existing album
+                cursor.execute(
+                    """
+                    UPDATE albums SET 
+                        name = ?,
+                        year = ?,
+                        month = ?
+                    WHERE path = ?
+                    """,
+                    (name, year, month, path)
+                )
+                album_id = existing_album["id"]
+            else:
+                # Insert a new album
+                cursor.execute(
+                    """
+                    INSERT INTO albums (path, name, year, month, created_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (path, name, year, month, datetime.now().isoformat())
+                )
+                album_id = cursor.lastrowid
+                
             self._conn.commit()
             return album_id
         except sqlite3.Error as err:
@@ -165,28 +180,28 @@ class DatabaseManager:
         cursor = self._conn.cursor()
         
         try:
+            # First check if the media file exists
             cursor.execute(
-                """
-                INSERT INTO media_files (album_id, filename, extension, is_video)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (album_id, filename) DO NOTHING
-                RETURNING id
-                """,
-                (album_id, filename, extension.lower(), 1 if is_video else 0)
+                "SELECT id FROM media_files WHERE album_id = ? AND filename = ?",
+                (album_id, filename)
             )
+            existing_media = cursor.fetchone()
             
-            result = cursor.fetchone()
-            self._conn.commit()
-            
-            if result:
-                return result[0]
+            if existing_media:
+                # Return the existing media ID
+                return existing_media["id"]
             else:
-                # Get the ID of the existing record
+                # Insert a new media file
                 cursor.execute(
-                    "SELECT id FROM media_files WHERE album_id = ? AND filename = ?",
-                    (album_id, filename)
+                    """
+                    INSERT INTO media_files (album_id, filename, extension, is_video)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (album_id, filename, extension.lower(), 1 if is_video else 0)
                 )
-                return cursor.fetchone()[0]
+                media_id = cursor.lastrowid
+                self._conn.commit()
+                return media_id
         except sqlite3.Error as err:
             _LOGGER.error("Error adding media file: %s", err)
             self._conn.rollback()
