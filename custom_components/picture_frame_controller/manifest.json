@@ -4,8 +4,13 @@
   "documentation": "https://github.com/your-username/picture-frame-controller",
   "issue_tracker": "https://github.com/your-username/picture-frame-controller/issues",
   "dependencies": [],
-  "codeowners": ["@your-username"],
-  "requirements": [],
+  "codeowners": [
+    "@your-username"
+  ],
+  "requirements": [
+    "pillow",
+    "aiohttp"
+  ],
   "config_flow": true,
   "version": "0.1.0",
   "iot_class": "local_polling"

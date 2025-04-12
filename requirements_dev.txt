@@ -1,0 +1,9 @@
+pytest
+pytest-cov
+black
+flake8
+pylint
+homeassistant
+pillow
+aiohttp
+pre-commit
