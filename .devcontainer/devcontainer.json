@@ -1,0 +1,36 @@
+{
+  "name": "Home Assistant Picture Frame Controller Development",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.9",
+  "postCreateCommand": "pip install -r requirements_dev.txt",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "python.pythonPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+      88
+    ]
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "github.vscode-pull-request-github",
+    "ryanluker.vscode-coverage-gutters",
+    "visualstudioexptteam.vscodeintellicode"
+  ],
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}"
+  },
+  "forwardPorts": [
+    8123
+  ],
+  "containerEnv": {
+    "HOMEASSISTANT_CONFIG": "/workspaces/picture-frame-controller/config"
+  }
+}
