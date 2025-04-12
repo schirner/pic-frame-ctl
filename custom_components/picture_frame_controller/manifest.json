@@ -1,0 +1,12 @@
+{
+  "domain": "picture_frame_controller",
+  "name": "Picture Frame Controller",
+  "documentation": "https://github.com/your-username/picture-frame-controller",
+  "issue_tracker": "https://github.com/your-username/picture-frame-controller/issues",
+  "dependencies": [],
+  "codeowners": ["@your-username"],
+  "requirements": [],
+  "config_flow": true,
+  "version": "0.1.0",
+  "iot_class": "local_polling"
+}

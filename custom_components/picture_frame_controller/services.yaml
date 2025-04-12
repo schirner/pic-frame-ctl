@@ -1,0 +1,45 @@
+next_image:
+  description: "Show the next random unseen image immediately."
+
+previous_image:
+  description: "Show the previously shown image."
+
+set_album_filter:
+  description: "Filter images to show only from a specific album."
+  fields:
+    album_name:
+      description: "The name of the album to filter by."
+      example: "Vacation Photos"
+      required: true
+
+clear_album_filter:
+  description: "Clear the album filter and show images from all albums."
+
+set_time_range:
+  description: "Filter images to show only from albums in a specific time range."
+  fields:
+    start_year:
+      description: "Starting year for the time range filter."
+      example: 2020
+      required: true
+    start_month:
+      description: "Starting month for the time range filter (1-12)."
+      example: 6
+      required: true
+    end_year:
+      description: "Ending year for the time range filter."
+      example: 2023
+      required: true
+    end_month:
+      description: "Ending month for the time range filter (1-12)."
+      example: 12
+      required: true
+
+clear_time_range:
+  description: "Clear the time range filter."
+
+reset_seen_status:
+  description: "Reset the seen status for all media files so they can be shown again."
+
+scan_media:
+  description: "Scan media directories and update the database with new files."
