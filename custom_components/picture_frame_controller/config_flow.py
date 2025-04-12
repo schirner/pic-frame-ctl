@@ -28,6 +28,18 @@ class PictureFrameConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    async def async_step_import(self, import_config: Dict[str, Any]) -> FlowResult:
+        """Handle import from configuration.yaml."""
+        # Check if already configured
+        await self.async_set_unique_id(DOMAIN)
+        self._abort_if_unique_id_configured()
+
+        # Create entry from import
+        return self.async_create_entry(
+            title="Picture Frame Controller",
+            data=import_config,
+        )
+
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
