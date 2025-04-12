@@ -26,13 +26,13 @@ The development setup uses the Home Assistant development container with a Docke
 3. When prompted in VS Code, select "Reopen in Container"
 
 4. Once inside the dev container, you can:
-   - Validate your component:
+   - Validate your component (note this validates all components):
      ```bash
-     python -m script.hassfest validate
+     python -m script.hassfest
      ```
    - Run your component's tests:
      ```bash
-     python -m pytest custom_components/picture_frame_controller/tests/
+     python -m pytest tests/components/picture_frame_controller/
      ```
    - Start a test instance of Home Assistant:
      ```bash
