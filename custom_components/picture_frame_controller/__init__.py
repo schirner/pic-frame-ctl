@@ -6,6 +6,7 @@ import logging
 import os
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
+import pathlib
 
 import voluptuous as vol
 
@@ -15,6 +16,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.components.frontend import add_extra_js_url
 
 from .const import (
     ATTR_ALBUM_NAME,
@@ -131,6 +133,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "config": config,
     }
     
+    # Register frontend resources for the Lovelace card
+    register_frontend_resources(hass)
+    
     # Register services
     register_services(hass, entry)
     
@@ -151,6 +156,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
     return True
+
+def register_frontend_resources(hass: HomeAssistant) -> None:
+    """Register frontend resources for the Lovelace card."""
+    # Register the card module
+    module_path = f"/custom_components/{DOMAIN}/frontend/picture-frame-card.js"
+    
+    # Register the resource with Home Assistant
+    add_extra_js_url(hass, module_path)
+    
+    _LOGGER.info(f"Registered picture-frame-card Lovelace card: {module_path}")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

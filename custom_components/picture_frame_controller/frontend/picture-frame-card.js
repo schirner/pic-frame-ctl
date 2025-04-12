@@ -1,39 +1,25 @@
-import { LitElement, html, css } from "https://unpkg.com/lit-element@2.4.0/lit-element.js?module";
+import { LitElement, html, css } from "lit";
+import { property } from "lit/decorators.js";
 
 class PictureFrameCard extends LitElement {
-  static get properties() {
-    return {
-      hass: { type: Object },
-      config: { type: Object },
-      selectedImage: { type: String },
-      albumName: { type: String },
-      imageName: { type: String },
-      year: { type: Number },
-      month: { type: Number },
-      albums: { type: Array },
-      activeFilters: { type: Object },
-    };
-  }
-
-  constructor() {
-    super();
-    this.selectedImage = null;
-    this.albumName = null;
-    this.imageName = null;
-    this.year = null;
-    this.month = null;
-    this.albums = [];
-    this.activeFilters = {
-      albumFilter: null,
-      timeRange: {
-        active: false,
-        startYear: new Date().getFullYear() - 1,
-        startMonth: 1,
-        endYear: new Date().getFullYear(),
-        endMonth: 12,
-      },
-    };
-  }
+  @property({ type: Object }) hass;
+  @property({ type: Object }) config;
+  @property({ type: String }) selectedImage = null;
+  @property({ type: String }) albumName = null;
+  @property({ type: String }) imageName = null;
+  @property({ type: Number }) year = null;
+  @property({ type: Number }) month = null;
+  @property({ type: Array }) albums = [];
+  @property({ type: Object }) activeFilters = {
+    albumFilter: null,
+    timeRange: {
+      active: false,
+      startYear: new Date().getFullYear() - 1,
+      startMonth: 1,
+      endYear: new Date().getFullYear(),
+      endMonth: 12,
+    },
+  };
 
   static get styles() {
     return css`
@@ -502,9 +488,11 @@ class PictureFrameCard extends LitElement {
 
 customElements.define("picture-frame-card", PictureFrameCard);
 
+// This part is crucial for the card to be discovered by Home Assistant
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "picture-frame-card",
   name: "Picture Frame Card",
   description: "A card to control the picture frame display",
+  preview: false,
 });
