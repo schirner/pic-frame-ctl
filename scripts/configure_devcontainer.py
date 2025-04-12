@@ -6,6 +6,7 @@ This script modifies the devcontainer.json file to add mount points for:
 1. The custom component directory
 2. The test data directory
 3. The Home Assistant configuration directory
+4. The tests directory
 """
 
 import json
@@ -58,11 +59,16 @@ def configure_devcontainer_mounts(devcontainer_file, component_dir,
         print(f"Error parsing JSON: {e}")
         sys.exit(1)
     
+    # Get the project root directory (parent of component_dir)
+    project_root = os.path.dirname(os.path.dirname(component_dir))
+    tests_dir = os.path.join(project_root, "tests")
+    
     # Define the mounts
     mounts = [
         f"source={component_dir},target=/workspaces/home-assistant-core/custom_components/{component_name},type=bind,consistency=cached",
         f"source={test_data_dir},target=/tmp/picture_frame_test,type=bind,consistency=cached",
-        f"source={config_dir},target=/workspaces/home-assistant-core/config,type=bind,consistency=cached"
+        f"source={config_dir},target=/workspaces/home-assistant-core/config,type=bind,consistency=cached",
+        f"source={tests_dir},target=/workspaces/home-assistant-core/tests/components/{component_name},type=bind,consistency=cached"
     ]
     
     # Update the mounts in the JSON data
