@@ -22,8 +22,7 @@ def event_loop():
 @pytest_asyncio.fixture
 async def hass():
     """Set up a Home Assistant instance for testing."""
-    hass = HomeAssistant()
-    hass.config.config_dir = "/tmp/ha-config"
+    hass = HomeAssistant(config_dir="/tmp/ha-config")
     
     # Set up config_entries and component registration for testing
     hass.config_entries = MagicMock()
