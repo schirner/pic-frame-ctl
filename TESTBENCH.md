@@ -22,6 +22,53 @@ This document outlines procedures for testing the Picture Frame Controller compo
    docker-compose -f .devcontainer/docker-compose.yml up -d
    ```
 
+### Using Home Assistant Core Dev Container (Recommended)
+
+Instead of using the custom dev container, you can use Home Assistant's official development container, which ensures compatibility with the exact same environment that Home Assistant uses.
+
+1. **Clone the Home Assistant Core Repository**:
+   ```bash
+   git clone https://github.com/home-assistant/core.git home-assistant-core
+   cd home-assistant-core
+   ```
+
+2. **Link Your Custom Component**:
+   ```bash
+   mkdir -p custom_components
+   ln -s /path/to/your/picture_frame_controller custom_components/picture_frame_controller
+   ```
+   
+   For example:
+   ```bash
+   ln -s /home/schirner/project/pic-frame-ctl/custom_components/picture_frame_controller custom_components/picture_frame_controller
+   ```
+
+3. **Open in VS Code and Start the Dev Container**:
+   - Open the Home Assistant core folder in VS Code
+   - When prompted, click "Reopen in Container"
+
+4. **Validate Your Component**:
+   ```bash
+   python -m script.hassfest validate
+   ```
+
+5. **Run Tests**:
+   ```bash
+   cd custom_components/picture_frame_controller
+   python -m pytest
+   ```
+
+6. **Start a Test Home Assistant Instance**:
+   ```bash
+   hass -c ./config
+   ```
+
+This approach offers several advantages:
+- Guaranteed compatibility with Home Assistant's environment
+- Access to Home Assistant's development tools
+- Automatic updates when Home Assistant updates their development container
+- Proper dependency management
+
 ### Installing Development Dependencies
 
 ```bash
