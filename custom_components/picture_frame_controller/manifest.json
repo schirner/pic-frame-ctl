@@ -1,11 +1,11 @@
 {
   "domain": "picture_frame_controller",
   "name": "Picture Frame Controller",
-  "documentation": "https://github.com/your-username/picture-frame-controller",
-  "issue_tracker": "https://github.com/your-username/picture-frame-controller/issues",
+  "documentation": "https://github.com/schirner/pic-frame-ctl",
+  "issue_tracker": "https://github.com/schirner/pic-frame-ctl/issues",
   "dependencies": [],
   "codeowners": [
-    "@your-username"
+    "@schirner"
   ],
   "requirements": [
     "pillow",
