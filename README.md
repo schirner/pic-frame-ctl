@@ -137,7 +137,9 @@ automation:
 - **Incorrect album dates**: Verify your folder naming follows the YYYY-MM-Name format
 - **Card not displaying**: Check that the custom card is correctly loaded
 
-## Contributing
+## Development / Contributing
+
+Mostly written by Claude 3.7 Sonet as Agent Chat in VS Code CoPilot in agentic mode. High-level (vibe-coding) guidance by author. Manual commits should be prefixed with MAN (or similar, was not very consistent).
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
