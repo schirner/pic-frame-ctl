@@ -16,7 +16,9 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.components.frontend import add_extra_js_url
+# Commenting out frontend imports for now
+# from homeassistant.components.frontend import async_register_built_in_panel, add_extra_js_url
+# from homeassistant.components.http.view import HomeAssistantView
 
 from .const import (
     ATTR_ALBUM_NAME,
@@ -133,8 +135,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "config": config,
     }
     
-    # Register frontend resources for the Lovelace card
-    register_frontend_resources(hass)
+    # Disabling frontend resources registration for now
+    # await register_frontend_resources(hass)
     
     # Register services
     register_services(hass, entry)
@@ -157,15 +159,42 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     return True
 
-def register_frontend_resources(hass: HomeAssistant) -> None:
-    """Register frontend resources for the Lovelace card."""
+
+# Commenting out the frontend resources registration function for now
+"""
+async def register_frontend_resources(hass: HomeAssistant) -> None:
+    # Get the URL for the frontend resources
+    root_path = pathlib.Path(__file__).parent
+    frontend_path = root_path / "frontend"
+    
     # Register the card module
-    module_path = f"/custom_components/{DOMAIN}/frontend/picture-frame-card.js"
+    module_url = f"/picture_frame_controller-{DOMAIN}.js"
+    
+    # Create and register a view that serves the resource
+    class PictureFrameCardJsView(HomeAssistantView):
+        requires_auth = False
+        url = module_url
+        name = f"picture_frame_controller_js"
+        
+        async def get(self, request):
+            # Handle GET request for the card JS file.
+            js_file = frontend_path / "picture-frame-card.js"
+            if not js_file.exists():
+                _LOGGER.error(f"Frontend resource not found: {js_file}")
+                return None
+                
+            with open(js_file, "r") as file:
+                content = file.read()
+            
+            return content
+    
+    hass.http.register_view(PictureFrameCardJsView())
     
     # Register the resource with Home Assistant
-    add_extra_js_url(hass, module_path)
+    add_extra_js_url(hass, module_url)
     
-    _LOGGER.info(f"Registered picture-frame-card Lovelace card: {module_path}")
+    _LOGGER.info(f"Registered picture-frame-card Lovelace card: {module_url}")
+"""
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

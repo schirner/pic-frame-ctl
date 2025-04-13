@@ -3,7 +3,7 @@
   "name": "Picture Frame Controller",
   "documentation": "https://github.com/your-username/picture-frame-controller",
   "issue_tracker": "https://github.com/your-username/picture-frame-controller/issues",
-  "dependencies": ["frontend"],
+  "dependencies": [],
   "codeowners": [
     "@your-username"
   ],
