@@ -7,8 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: ha_picture_frame_test
     volumes:
-      - ../custom_components/picture_frame_controller:/picture_frame_controller
-      - ./config:/config
+      - ..:/dev-picture-frame
     ports:
       - "8124:8123"
     restart: unless-stopped

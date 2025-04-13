@@ -22,12 +22,7 @@ if [ ! -f /config/themes.yaml ]; then
   echo "# Default themes" > /config/themes.yaml
 fi
 
-# Create GitHub token placeholder if it doesn't exist
-if [ ! -f /config/secrets.yaml ]; then
-  echo "# Replace with your actual GitHub token for HACS" > /config/secrets.yaml
-  echo "github_token: xxx" >> /config/secrets.yaml
-  echo "For full HACS functionality, you need to add your GitHub token to /config/secrets.yaml"
-fi
+
 
 # Run the test image generator
 echo "Generating test images for Picture Frame Controller..."
@@ -82,10 +77,6 @@ views:
               service: picture_frame_controller.scan_media
 EOF
 
-# Link the Picture Frame Controller custom component
-echo "Linking the Picture Frame Controller custom component..."
-mkdir -p /config/custom_components
-ln -s /picture_frame_controller /config/custom_components/picture_frame_controller
 
 # Start Home Assistant
 echo "Starting Home Assistant..."

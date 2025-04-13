@@ -23,12 +23,6 @@ RUN mkdir -p /tmp/hacs && \
 # Copy configuration.yaml for Home Assistant setup
 COPY configuration.yaml /config/configuration.yaml
 
-# Create directories for media files
-RUN mkdir -p /config/media/2023-01-winter_photos && \
-    mkdir -p /config/media/2024-06-summer_vacation && \
-    mkdir -p /config/media/family_photos && \
-    mkdir -p /config/media/test_generated_media
-
 # Create a scripts directory and copy the image generator script
 RUN mkdir -p /config/scripts
 COPY generate_test_images.py /config/scripts/
