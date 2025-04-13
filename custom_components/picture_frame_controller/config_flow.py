@@ -1,4 +1,5 @@
 """Config flow for Picture Frame Controller integration."""
+
 import os
 import re
 from typing import Any, Dict, List, Optional
@@ -53,7 +54,7 @@ class PictureFrameConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     base_path = path
                     if path.endswith("/**") or path.endswith("/*"):
                         base_path = path[:-2] if path.endswith("/*") else path[:-3]
-                        
+
                     if not os.path.isdir(base_path):
                         errors[CONF_MEDIA_PATHS] = "invalid_path"
                         break
@@ -80,11 +81,12 @@ class PictureFrameConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_MEDIA_PATHS): cv.multi_select({
-                        # This would normally be populated with actual directory options
-                        # For now it's an empty dictionary as we'd use dynamic options in a real setup
-                    }),
-                    vol.Optional(CONF_EXCLUDE_PATTERN): cv.multi_select({}),
+                    vol.Required(CONF_MEDIA_PATHS): vol.All(
+                        cv.ensure_list, [cv.string]
+                    ),
+                    vol.Optional(CONF_EXCLUDE_PATTERN): vol.All(
+                        cv.ensure_list, [cv.string]
+                    ),
                     vol.Optional(
                         CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
                     ): cv.positive_int,
@@ -127,24 +129,30 @@ class PictureFrameOptionsFlow(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_MEDIA_PATHS, 
-                        default=self.config_entry.data.get(CONF_MEDIA_PATHS, [])
-                    ): cv.multi_select({}),
+                        CONF_MEDIA_PATHS,
+                        default=self.config_entry.data.get(CONF_MEDIA_PATHS, []),
+                    ): vol.All(cv.ensure_list, [cv.string]),
                     vol.Optional(
-                        CONF_EXCLUDE_PATTERN, 
-                        default=self.config_entry.data.get(CONF_EXCLUDE_PATTERN, [])
-                    ): cv.multi_select({}),
+                        CONF_EXCLUDE_PATTERN,
+                        default=self.config_entry.data.get(CONF_EXCLUDE_PATTERN, []),
+                    ): vol.All(cv.ensure_list, [cv.string]),
                     vol.Optional(
                         CONF_UPDATE_INTERVAL,
-                        default=self.config_entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
+                        default=self.config_entry.data.get(
+                            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
+                        ),
                     ): cv.positive_int,
                     vol.Optional(
                         CONF_IMAGE_EXTENSIONS,
-                        default=self.config_entry.data.get(CONF_IMAGE_EXTENSIONS, DEFAULT_IMAGE_EXTENSIONS),
+                        default=self.config_entry.data.get(
+                            CONF_IMAGE_EXTENSIONS, DEFAULT_IMAGE_EXTENSIONS
+                        ),
                     ): cv.multi_select({ext: ext for ext in DEFAULT_IMAGE_EXTENSIONS}),
                     vol.Optional(
                         CONF_VIDEO_EXTENSIONS,
-                        default=self.config_entry.data.get(CONF_VIDEO_EXTENSIONS, DEFAULT_VIDEO_EXTENSIONS),
+                        default=self.config_entry.data.get(
+                            CONF_VIDEO_EXTENSIONS, DEFAULT_VIDEO_EXTENSIONS
+                        ),
                     ): cv.multi_select({ext: ext for ext in DEFAULT_VIDEO_EXTENSIONS}),
                 }
             ),
