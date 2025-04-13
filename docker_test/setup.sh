@@ -6,6 +6,17 @@ mkdir -p /config/dashboards
 mkdir -p /config/www/community
 mkdir -p /config/.storage
 
+# Create album directories following the YYYY-MM-AlbumName convention
+mkdir -p /config/media/2022-01-Winter
+mkdir -p /config/media/2022-06-Summer
+mkdir -p /config/media/2023-04-Spring
+mkdir -p /config/media/2023-09-Fall
+mkdir -p /config/media/2024-12-Holiday
+mkdir -p /config/media/2023-10-FamilyTrips/Beach
+mkdir -p /config/media/2023-10-FamilyTrips/Mountains
+mkdir -p /config/media/2024-03-Vacations/Europe
+mkdir -p /config/media/2024-03-Vacations/Asia
+
 # Create a basic theme file if none exists
 if [ ! -f /config/themes.yaml ]; then
   echo "# Default themes" > /config/themes.yaml
@@ -17,6 +28,12 @@ if [ ! -f /config/secrets.yaml ]; then
   echo "github_token: xxx" >> /config/secrets.yaml
   echo "For full HACS functionality, you need to add your GitHub token to /config/secrets.yaml"
 fi
+
+# Run the test image generator
+echo "Generating test images for Picture Frame Controller..."
+mkdir -p /config/media/test_generated_media
+cd /config/scripts
+python3 generate_test_images.py --count 10
 
 # Create dashboard for picture frame
 cat > /config/dashboards/picture_frame.yaml << 'EOF'

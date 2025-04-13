@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Script to generate test images for the Picture Frame Controller.
-This creates sample images in different albums to test component functionality.
+This creates sample images in different albums following the YYYY-MM-AlbumName convention
+to test component functionality.
 """
 
 import os
@@ -52,25 +53,54 @@ def create_test_image(path, width=800, height=600, text=None):
 def main():
     parser = argparse.ArgumentParser(description='Generate test images for Picture Frame Controller')
     parser.add_argument('--count', type=int, default=5, help='Number of images per album')
+    parser.add_argument('--base-dir', type=str, default=None, help='Base directory for test media')
     args = parser.parse_args()
     
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_media')
+    # Check if running in Docker container
+    if os.path.exists('/config'):
+        # Use Docker container path
+        base_dir = '/config/media'
+    elif args.base_dir:
+        # Use provided base directory
+        base_dir = args.base_dir
+    else:
+        # Use default path
+        base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../docker_test/config/media')
+    
+    # Create albums following the YYYY-MM-AlbumName format as per README.md
     albums = [
-        'album1',
-        'album2/subalbum1',
-        'album2/subalbum2',
+        '2022-01-Winter',
+        '2022-06-Summer',
+        '2023-04-Spring',
+        '2023-09-Fall',
+        '2024-12-Holiday'
     ]
+    
+    # Create a subfolder structure to test nested albums
+    nested_albums = [
+        '2023-10-FamilyTrips/Beach',
+        '2023-10-FamilyTrips/Mountains',
+        '2024-03-Vacations/Europe',
+        '2024-03-Vacations/Asia'
+    ]
+    
+    # Combine all album paths
+    all_albums = albums + nested_albums
     
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     
     # Create images in each album
-    for album in albums:
+    for album in all_albums:
         for i in range(args.count):
-            filename = f"test_image_{i+1}_{timestamp}.jpg"
+            filename = f"image_{i+1}_{timestamp}.jpg"
             path = os.path.join(base_dir, album, filename)
             create_test_image(path, text=f"{album} - Image {i+1}")
             
-    print(f"Generated {args.count} test images in each album")
+    print(f"Generated {args.count} test images in each of {len(all_albums)} albums")
+    print(f"Images stored in: {base_dir}")
+    print("Albums created:")
+    for album in all_albums:
+        print(f"  - {album}")
 
 if __name__ == "__main__":
     main()
