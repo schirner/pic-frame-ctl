@@ -12,7 +12,7 @@
     "aiohttp"
   ],
   "config_flow": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "iot_class": "local_polling",
   "homeassistant": "2023.1.0"
 }
