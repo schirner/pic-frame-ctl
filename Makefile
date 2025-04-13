@@ -9,6 +9,7 @@ TEST_DATA_DIR := /tmp/picture_frame_test
 HA_CONFIG_DIR := $(HA_CORE_DIR)/config
 DEVCONTAINER_FILE := $(HA_CORE_DIR)/.devcontainer/devcontainer.json
 SCRIPTS_DIR := $(PROJECT_DIR)/scripts
+TEMPLATES_DIR := $(PROJECT_DIR)/templates
 
 # Colors
 CYAN := \033[0;36m
@@ -53,17 +54,19 @@ ha-core:
 	fi
 	@mkdir -p "$(HA_CORE_DIR)/custom_components"
 
-# Set up Home Assistant configuration
+# Set up Home Assistant configuration from templates
 config: ha-core
-	@echo "$(GREEN)Setting up Home Assistant configuration...$(NC)"
-	@mkdir -p "$(HA_CONFIG_DIR)"
+	@echo "$(GREEN)Setting up Home Assistant configuration from templates...$(NC)"
+	@mkdir -p "$(HA_CONFIG_DIR)/dashboards"
 	@if [ ! -f "$(HA_CONFIG_DIR)/configuration.yaml" ]; then \
-		echo "# Minimal Home Assistant configuration for testing" > "$(HA_CONFIG_DIR)/configuration.yaml"; \
-		echo "default_config:" >> "$(HA_CONFIG_DIR)/configuration.yaml"; \
-		echo "" >> "$(HA_CONFIG_DIR)/configuration.yaml"; \
-		echo "picture_frame_controller:" >> "$(HA_CONFIG_DIR)/configuration.yaml"; \
-		echo "  media_paths:" >> "$(HA_CONFIG_DIR)/configuration.yaml"; \
-		echo "    - \"/tmp/picture_frame_test/**\"" >> "$(HA_CONFIG_DIR)/configuration.yaml"; \
+		echo "$(GREEN)Copying configuration files...$(NC)"; \
+		cp "$(TEMPLATES_DIR)/configuration.yaml" "$(HA_CONFIG_DIR)/configuration.yaml"; \
+		cp "$(TEMPLATES_DIR)/themes.yaml" "$(HA_CONFIG_DIR)/themes.yaml"; \
+		cp "$(TEMPLATES_DIR)/input_number.yaml" "$(HA_CONFIG_DIR)/input_number.yaml"; \
+		mkdir -p "$(HA_CONFIG_DIR)/dashboards"; \
+		cp "$(TEMPLATES_DIR)/dashboards/picture_frame_debug.yaml" "$(HA_CONFIG_DIR)/dashboards/picture_frame_debug.yaml"; \
+	else \
+		echo "$(YELLOW)Configuration files already exist, skipping...$(NC)"; \
 	fi
 
 # Create test data directories and sample files
@@ -108,7 +111,7 @@ help:
 	@echo "Available targets:"
 	@echo "  $(CYAN)setup$(NC)         - Set up the complete development environment"
 	@echo "  $(CYAN)ha-core$(NC)       - Clone or update Home Assistant core repository"
-	@echo "  $(CYAN)config$(NC)        - Create Home Assistant configuration for testing"
+	@echo "  $(CYAN)config$(NC)        - Copy configuration templates to Home Assistant config directory"
 	@echo "  $(CYAN)test-data$(NC)     - Create test data directories and files"
 	@echo "  $(CYAN)setup-mounts$(NC)  - Configure volume mounts in devcontainer.json"
 	@echo "  $(CYAN)vs-code$(NC)       - Open VS Code in the Home Assistant core directory"

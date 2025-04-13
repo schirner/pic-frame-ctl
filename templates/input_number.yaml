@@ -1,0 +1,32 @@
+# Input numbers for time range filtering
+start_year:
+  name: Start Year
+  min: 2000
+  max: 2030
+  step: 1
+  mode: box
+  initial: 2020
+
+start_month:
+  name: Start Month
+  min: 1
+  max: 12
+  step: 1
+  mode: box
+  initial: 1
+
+end_year:
+  name: End Year
+  min: 2000
+  max: 2030
+  step: 1
+  mode: box
+  initial: 2023
+
+end_month:
+  name: End Month
+  min: 1
+  max: 12
+  step: 1
+  mode: box
+  initial: 12

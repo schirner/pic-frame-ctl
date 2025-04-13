@@ -1,0 +1,139 @@
+# Picture Frame Controller Debug Dashboard
+title: Picture Frame Debug Dashboard
+views:
+  - title: Main
+    icon: mdi:image
+    cards:
+      - type: entities
+        title: Picture Frame Controller Status
+        entities:
+          - sensor.picture_frame_controller_selected_image
+          - sensor.picture_frame_controller_total_images
+          - sensor.picture_frame_controller_unseen_images
+      
+      - type: custom:picture-frame-card
+        entity: sensor.picture_frame_controller_selected_image
+      
+      - type: entities
+        title: Picture Frame Services
+        show_header_toggle: false
+        entities:
+          - type: button
+            name: Next Image
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.next_image
+          - type: button
+            name: Previous Image
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.previous_image
+          - type: button
+            name: Reset Seen Status
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.reset_seen_status
+          - type: button
+            name: Scan Media
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.scan_media
+      
+      - type: entities
+        title: Album Filtering
+        show_header_toggle: false
+        entities:
+          - type: custom:input-select-action
+            name: Set Album Filter
+            options:
+              - 2023-01-winter_photos
+              - 2023-06-summer_vacation
+              - family_photos
+            action:
+              action: call-service
+              service: picture_frame_controller.set_album_filter
+              service_data:
+                album_name: "[[selection]]"
+          - type: button
+            name: Clear Album Filter
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.clear_album_filter
+  
+  - title: Time Filter
+    icon: mdi:calendar
+    cards:
+      - type: entities
+        title: Time Range Filtering
+        entities:
+          - type: section
+            label: Start Date
+          - type: input-number
+            name: Start Year
+            entity: input_number.start_year
+          - type: input-number
+            name: Start Month
+            entity: input_number.start_month
+          - type: section
+            label: End Date
+          - type: input-number
+            name: End Year
+            entity: input_number.end_year
+          - type: input-number
+            name: End Month
+            entity: input_number.end_month
+          - type: button
+            name: Apply Time Range
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.set_time_range
+              service_data:
+                start_year: "{{ states('input_number.start_year') | int }}"
+                start_month: "{{ states('input_number.start_month') | int }}"
+                end_year: "{{ states('input_number.end_year') | int }}"
+                end_month: "{{ states('input_number.end_month') | int }}"
+          - type: button
+            name: Clear Time Range
+            tap_action:
+              action: call-service
+              service: picture_frame_controller.clear_time_range
+      
+      - type: markdown
+        content: >
+          ## Debugging Information
+          
+          This tab provides controls for time range filtering of images.
+          
+          1. Set the start and end year/month
+          2. Click "Apply Time Range" to filter images
+          3. Click "Clear Time Range" to show all images
+          
+          The Picture Frame Controller will automatically reset the seen status
+          for images in the specified time range if no unseen images are found.
+      
+  - title: Attributes
+    icon: mdi:information-outline
+    cards:
+      - type: entities
+        title: Selected Image Attributes
+        entity: sensor.picture_frame_controller_selected_image
+        state_color: true
+      
+      - type: attributes
+        title: Image Details
+        entity: sensor.picture_frame_controller_selected_image
+        attributes:
+          - album_name
+          - year
+          - month
+          - media_path
+          - image_name
+          - last_shown
+      
+      - type: history-graph
+        title: Image Count History
+        entities:
+          - entity: sensor.picture_frame_controller_total_images
+            name: Total Images
+          - entity: sensor.picture_frame_controller_unseen_images
+            name: Unseen Images

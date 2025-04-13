@@ -1,0 +1,31 @@
+# Minimal Home Assistant configuration for testing
+default_config:
+
+# Picture Frame Controller configuration
+picture_frame_controller:
+  media_paths:
+    - "/tmp/picture_frame_test/**"
+
+# Frontend customization
+frontend:
+  themes: !include themes.yaml
+
+# Lovelace configuration
+lovelace:
+  mode: yaml
+  dashboards:
+    picture-frame-debug:
+      mode: yaml
+      title: Picture Frame Debug
+      icon: mdi:image-frame
+      show_in_sidebar: true
+      filename: dashboards/picture_frame_debug.yaml
+
+# Input number integration for time range filtering
+input_number: !include input_number.yaml
+
+# Logger configuration for debugging
+logger:
+  default: info
+  logs:
+    custom_components.picture_frame_controller: debug
