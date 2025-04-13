@@ -143,6 +143,12 @@ Mostly written by Claude 3.7 Sonet as Agent Chat in VS Code CoPilot in agentic m
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Known Issues
+
+- Limping first version: I see that images are selected randomly and updating
+- Config flow: problems with directory selection
+- Lovlace card: disabled
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
