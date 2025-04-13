@@ -31,7 +31,7 @@ RUN mkdir -p /config/media/2023-01-winter_photos && \
 
 # Create a scripts directory and copy the image generator script
 RUN mkdir -p /config/scripts
-COPY ../scripts/generate_test_images.py /config/scripts/
+COPY generate_test_images.py /config/scripts/
 RUN chmod +x /config/scripts/generate_test_images.py
 
 # Create a setup script to run at container startup
