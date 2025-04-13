@@ -3,5 +3,6 @@
   "render_readme": true,
   "content_in_root": false,
   "domains": ["picture_frame_controller"],
-  "homeassistant": "2023.1.0"
+  "homeassistant": "2023.1.0",
+  "default_branch": "main"
 }
