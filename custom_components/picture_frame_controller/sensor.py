@@ -1,4 +1,5 @@
 """Sensor platform for picture frame controller."""
+
 import logging
 import os
 from datetime import datetime, timedelta
@@ -62,11 +63,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up the picture frame controller sensors."""
     coordinator = hass.data[DOMAIN][config_entry.entry_id]["coordinator"]
-    
+
     entities = []
     for description in SENSOR_DESCRIPTIONS:
         entities.append(PictureFrameSensor(coordinator, description, config_entry))
-    
+
     async_add_entities(entities)
 
 
@@ -86,60 +87,50 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_{entity_description.key}"
         self._attr_name = f"{entity_description.name}"
         self._attr_has_entity_name = True
-        
-        # Set the initial state
-        self._update_state()
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self._attr_native_value
+        if not self.coordinator.data:
+            return None
+
+        if self.entity_description.key == SENSOR_SELECTED_IMAGE:
+            media_info = self.coordinator.data.get("selected_media")
+            if media_info:
+                return os.path.join(
+                    media_info.get("album_path", ""), media_info.get("filename", "")
+                )
+            return None
+
+        elif self.entity_description.key == SENSOR_COUNT_IMAGE:
+            return self.coordinator.data.get("count_total", 0)
+
+        elif self.entity_description.key == SENSOR_COUNT_UNSEEN:
+            return self.coordinator.data.get("count_unseen", 0)
+
+        return None
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
         """Return entity specific state attributes."""
         if self.entity_description.key != SENSOR_SELECTED_IMAGE:
             return None
-            
+
         # Only the selected image sensor has additional attributes
+        if not self.coordinator.data:
+            return None
+
         media_info = self.coordinator.data.get("selected_media")
         if not media_info:
             return None
-            
+
         return {
             ATTR_ALBUM_NAME: media_info.get("album_name"),
             ATTR_YEAR: media_info.get("year"),
             ATTR_MONTH: media_info.get("month"),
             ATTR_MEDIA_PATH: os.path.join(
-                media_info.get("album_path", ""), 
-                media_info.get("filename", "")
+                media_info.get("album_path", ""), media_info.get("filename", "")
             ),
             ATTR_IMAGE_NAME: media_info.get("filename"),
             ATTR_LAST_SHOWN: media_info.get("last_shown"),
         }
-
-    def _update_state(self) -> None:
-        """Update the state from coordinator data."""
-        if self.coordinator.data is None:
-            return
-            
-        if self.entity_description.key == SENSOR_SELECTED_IMAGE:
-            media_info = self.coordinator.data.get("selected_media")
-            if media_info:
-                self._attr_native_value = os.path.join(
-                    media_info.get("album_path", ""),
-                    media_info.get("filename", "")
-                )
-            else:
-                self._attr_native_value = None
-                
-        elif self.entity_description.key == SENSOR_COUNT_IMAGE:
-            self._attr_native_value = self.coordinator.data.get("count_total", 0)
-            
-        elif self.entity_description.key == SENSOR_COUNT_UNSEEN:
-            self._attr_native_value = self.coordinator.data.get("count_unseen", 0)
-
-    async def async_update(self) -> None:
-        """Update the entity."""
-        await self.coordinator.async_request_refresh()
-        self._update_state()
