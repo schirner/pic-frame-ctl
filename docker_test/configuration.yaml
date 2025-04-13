@@ -1,0 +1,65 @@
+# Home Assistant Configuration for Picture Frame Controller Testing
+
+# Basic configuration
+default_config:
+
+# Enable frontend
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /local/community/lovelace-wallpanel/wallpanel.js
+
+# Enable HACS
+hacs:
+  token: !secret github_token
+
+# HTTP component for external access
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+
+# Picture Frame Controller integration
+picture_frame_controller:
+  media_paths:
+    - /config/media/**
+  update_interval: 30
+  image_extensions:
+    - .jpg
+    - .jpeg
+    - .png
+    - .gif
+  video_extensions:
+    - .mp4
+
+# Include dashboards
+lovelace:
+  mode: storage
+  dashboards:
+    picture-frame:
+      mode: yaml
+      title: Picture Frame
+      icon: mdi:image-frame
+      show_in_sidebar: true
+      filename: dashboards/picture_frame.yaml
+
+# Folder for themes
+theme: !include themes.yaml
+
+# Create an automation to start the picture frame on startup
+automation:
+  - alias: "Start Picture Frame on Startup"
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - delay: "00:00:30"
+      - service: picture_frame_controller.scan_media
+      - delay: "00:00:10"  
+      - service: picture_frame_controller.next_image
+
+logger:
+  default: info
+  logs:
+    custom_components.picture_frame_controller: debug

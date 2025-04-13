@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  homeassistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ha_picture_frame_test
+    volumes:
+      - ../custom_components/picture_frame_controller:/picture_frame_controller
+      - ./config:/config
+    ports:
+      - "8124:8123"
+    restart: unless-stopped
+    environment:
+      - TZ=America/New_York
