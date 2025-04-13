@@ -49,6 +49,21 @@ class PictureFrameConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
+                # Process multi-line input into lists
+                if isinstance(user_input.get(CONF_MEDIA_PATHS), str):
+                    user_input[CONF_MEDIA_PATHS] = [
+                        path.strip()
+                        for path in user_input[CONF_MEDIA_PATHS].splitlines()
+                        if path.strip()
+                    ]
+
+                if isinstance(user_input.get(CONF_EXCLUDE_PATTERN), str):
+                    user_input[CONF_EXCLUDE_PATTERN] = [
+                        pattern.strip()
+                        for pattern in user_input[CONF_EXCLUDE_PATTERN].splitlines()
+                        if pattern.strip()
+                    ]
+
                 # Validate the media paths
                 for path in user_input[CONF_MEDIA_PATHS]:
                     base_path = path
@@ -60,7 +75,10 @@ class PictureFrameConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         break
 
                 # Validate exclude patterns
-                if CONF_EXCLUDE_PATTERN in user_input:
+                if (
+                    CONF_EXCLUDE_PATTERN in user_input
+                    and user_input[CONF_EXCLUDE_PATTERN]
+                ):
                     try:
                         for pattern in user_input[CONF_EXCLUDE_PATTERN]:
                             re.compile(pattern)
@@ -81,12 +99,8 @@ class PictureFrameConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_MEDIA_PATHS): vol.All(
-                        cv.ensure_list, [cv.string]
-                    ),
-                    vol.Optional(CONF_EXCLUDE_PATTERN): vol.All(
-                        cv.ensure_list, [cv.string]
-                    ),
+                    vol.Required(CONF_MEDIA_PATHS): str,
+                    vol.Optional(CONF_EXCLUDE_PATTERN, default=""): str,
                     vol.Optional(
                         CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
                     ): cv.positive_int,
@@ -122,20 +136,39 @@ class PictureFrameOptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
+            # Process multi-line input into lists
+            if isinstance(user_input.get(CONF_MEDIA_PATHS), str):
+                user_input[CONF_MEDIA_PATHS] = [
+                    path.strip()
+                    for path in user_input[CONF_MEDIA_PATHS].splitlines()
+                    if path.strip()
+                ]
+
+            if isinstance(user_input.get(CONF_EXCLUDE_PATTERN), str):
+                user_input[CONF_EXCLUDE_PATTERN] = [
+                    pattern.strip()
+                    for pattern in user_input[CONF_EXCLUDE_PATTERN].splitlines()
+                    if pattern.strip()
+                ]
+
             return self.async_create_entry(title="", data=user_input)
+
+        # Convert existing config entry data to options
+        media_paths = self.config_entry.data.get(CONF_MEDIA_PATHS, [])
+        exclude_patterns = self.config_entry.data.get(CONF_EXCLUDE_PATTERN, [])
+
+        # Join lists into multi-line strings
+        media_paths_str = "\n".join(media_paths) if media_paths else ""
+        exclude_patterns_str = "\n".join(exclude_patterns) if exclude_patterns else ""
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        CONF_MEDIA_PATHS,
-                        default=self.config_entry.data.get(CONF_MEDIA_PATHS, []),
-                    ): vol.All(cv.ensure_list, [cv.string]),
+                    vol.Required(CONF_MEDIA_PATHS, default=media_paths_str): str,
                     vol.Optional(
-                        CONF_EXCLUDE_PATTERN,
-                        default=self.config_entry.data.get(CONF_EXCLUDE_PATTERN, []),
-                    ): vol.All(cv.ensure_list, [cv.string]),
+                        CONF_EXCLUDE_PATTERN, default=exclude_patterns_str
+                    ): str,
                     vol.Optional(
                         CONF_UPDATE_INTERVAL,
                         default=self.config_entry.data.get(
