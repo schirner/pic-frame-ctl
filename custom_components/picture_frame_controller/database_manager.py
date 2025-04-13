@@ -33,17 +33,45 @@ class DatabaseManager:
         """Set up the database if it does not exist."""
         db_exists = os.path.exists(self._db_path)
         
-        self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
+        self._connect()
         
         if not db_exists:
             self._create_tables()
         else:
             self._check_version()
 
+    def _connect(self):
+        """Establish a connection to the database."""
+        try:
+            if self._conn is None:
+                self._conn = sqlite3.connect(self._db_path, check_same_thread=False)
+                self._conn.row_factory = sqlite3.Row
+                _LOGGER.debug("Successfully connected to database")
+        except sqlite3.Error as err:
+            _LOGGER.error("Error connecting to database: %s", err)
+            raise
+
+    def _ensure_connection(self):
+        """Ensure database connection is established."""
+        try:
+            # Test if connection is alive
+            if self._conn is not None:
+                self._conn.execute("SELECT 1")
+            else:
+                self._connect()
+        except sqlite3.Error:
+            _LOGGER.warning("Database connection lost, reconnecting...")
+            self._conn = None
+            self._connect()
+
+    def _get_cursor(self):
+        """Get a database cursor, ensuring connection is available."""
+        self._ensure_connection()
+        return self._conn.cursor()
+
     def _create_tables(self):
         """Create the initial database tables."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         # Create schema version table
         cursor.execute("""
@@ -97,7 +125,7 @@ class DatabaseManager:
 
     def _check_version(self):
         """Check the database schema version and migrate if needed."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute("SELECT version FROM schema_version ORDER BY id DESC LIMIT 1")
@@ -115,12 +143,12 @@ class DatabaseManager:
         # Add migration steps as needed in the future
         # Example:
         # if current_version == 1 and DB_VERSION == 2:
-        #     cursor = self._conn.cursor()
+        #     cursor = self._get_cursor()
         #     cursor.execute("ALTER TABLE albums ADD COLUMN new_field TEXT")
         #     self._conn.commit()
         
         # Update the schema version
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         cursor.execute(
             "INSERT INTO schema_version (version, updated_at) VALUES (?, ?)",
             (DB_VERSION, datetime.now().isoformat())
@@ -137,7 +165,7 @@ class DatabaseManager:
     def add_album(self, path: str, name: str, year: Optional[int] = None, 
                  month: Optional[int] = None) -> int:
         """Add an album to the database."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             # First check if the album exists
@@ -177,7 +205,7 @@ class DatabaseManager:
 
     def add_media_file(self, album_id: int, filename: str, extension: str, is_video: bool = False) -> int:
         """Add a media file to the database."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             # First check if the media file exists
@@ -209,7 +237,7 @@ class DatabaseManager:
 
     def get_album_by_path(self, path: str) -> Optional[Dict[str, Any]]:
         """Get album by path."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute(
@@ -227,7 +255,7 @@ class DatabaseManager:
 
     def get_albums(self) -> List[Dict[str, Any]]:
         """Get all albums."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute("SELECT * FROM albums ORDER BY year, month, name")
@@ -238,7 +266,7 @@ class DatabaseManager:
 
     def get_media_count(self) -> int:
         """Get the total count of media files."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute("SELECT COUNT(*) as count FROM media_files")
@@ -249,7 +277,7 @@ class DatabaseManager:
 
     def get_unseen_count(self, album_id: Optional[int] = None) -> int:
         """Get the count of unseen media files, optionally filtered by album."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             if album_id is not None:
@@ -271,7 +299,7 @@ class DatabaseManager:
                                end_year: Optional[int] = None,
                                end_month: Optional[int] = None) -> Optional[Dict[str, Any]]:
         """Get a random unseen media file with filters."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             query = """
@@ -319,7 +347,7 @@ class DatabaseManager:
 
     def mark_media_as_seen(self, media_id: int):
         """Mark a media file as seen with timestamp."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             timestamp = datetime.now().isoformat()
@@ -340,7 +368,7 @@ class DatabaseManager:
                                   end_year: Optional[int] = None,
                                   end_month: Optional[int] = None) -> Optional[Dict[str, Any]]:
         """Get the previously shown media."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             query = """
@@ -397,7 +425,7 @@ class DatabaseManager:
                          end_year: Optional[int] = None,
                          end_month: Optional[int] = None):
         """Reset seen status for all media or filtered by album/time range."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             if album_id is not None:
@@ -429,7 +457,7 @@ class DatabaseManager:
 
     def get_album_by_id(self, album_id: int) -> Optional[Dict[str, Any]]:
         """Get album by ID."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute("SELECT * FROM albums WHERE id = ?", (album_id,))
@@ -444,7 +472,7 @@ class DatabaseManager:
 
     def clear_database(self):
         """Clear all data from the database (used for testing)."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute("DELETE FROM media_files")
@@ -456,7 +484,7 @@ class DatabaseManager:
 
     def get_media_by_id(self, media_id: int) -> Optional[Dict[str, Any]]:
         """Get media by ID with album information."""
-        cursor = self._conn.cursor()
+        cursor = self._get_cursor()
         
         try:
             cursor.execute("""

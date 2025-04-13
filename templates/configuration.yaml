@@ -1,16 +1,21 @@
 # Minimal Home Assistant configuration for testing
-default_config:
 
-# Picture Frame Controller configuration
-picture_frame_controller:
-  media_paths:
-    - "/tmp/picture_frame_test/**"
+# Core components needed instead of default_config
+homeassistant:
+  name: Home Assistant
+  latitude: 0
+  longitude: 0
+  elevation: 0
+  unit_system: metric
+  time_zone: UTC
 
-# Frontend customization
+# Required components
 frontend:
   themes: !include themes.yaml
 
-# Lovelace configuration
+http:
+recorder:
+history:
 lovelace:
   mode: yaml
   dashboards:
@@ -23,6 +28,11 @@ lovelace:
 
 # Input number integration for time range filtering
 input_number: !include input_number.yaml
+
+# Picture Frame Controller configuration
+picture_frame_controller:
+  media_paths:
+    - "/tmp/picture_frame_test/**"
 
 # Logger configuration for debugging
 logger:
