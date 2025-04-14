@@ -20,12 +20,17 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import (
     ATTR_ALBUM_NAME,
+    ATTR_ENTITY_PICTURE,
     ATTR_IMAGE_NAME,
     ATTR_LAST_SHOWN,
     ATTR_MEDIA_PATH,
     ATTR_MONTH,
     ATTR_YEAR,
+    CONF_DISPLAY_URI_PREFIX,
+    CONF_FILE_SYSTEM_PREFIX,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_DISPLAY_URI_PREFIX,
+    DEFAULT_FILE_SYSTEM_PREFIX,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     SENSOR_COUNT_IMAGE,
@@ -87,6 +92,20 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_{entity_description.key}"
         self._attr_name = f"{entity_description.name}"
         self._attr_has_entity_name = True
+        
+        # Get prefix configurations
+        self._file_system_prefix = config_entry.data.get(
+            CONF_FILE_SYSTEM_PREFIX, DEFAULT_FILE_SYSTEM_PREFIX
+        )
+        self._display_uri_prefix = config_entry.data.get(
+            CONF_DISPLAY_URI_PREFIX, DEFAULT_DISPLAY_URI_PREFIX
+        )
+
+    def _replace_prefix(self, path: str) -> str:
+        """Replace file system prefix with display URI prefix."""
+        if path and path.startswith(self._file_system_prefix):
+            return path.replace(self._file_system_prefix, self._display_uri_prefix, 1)
+        return path
 
     @property
     def native_value(self):
@@ -109,6 +128,27 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
             return self.coordinator.data.get("count_unseen", 0)
 
         return None
+        
+    @property
+    def entity_picture(self) -> Optional[str]:
+        """Return entity picture for the selected image."""
+        if self.entity_description.key != SENSOR_SELECTED_IMAGE:
+            return None
+            
+        if not self.coordinator.data:
+            return None
+            
+        media_info = self.coordinator.data.get("selected_media")
+        if not media_info:
+            return None
+            
+        full_path = os.path.join(
+            media_info.get("album_path", ""), 
+            media_info.get("filename", "")
+        )
+        
+        # Convert filesystem path to display URI
+        return self._replace_prefix(full_path)
 
     @property
     def extra_state_attributes(self) -> Optional[Dict[str, Any]]:
@@ -124,13 +164,19 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
         if not media_info:
             return None
 
+        file_path = os.path.join(
+            media_info.get("album_path", ""), media_info.get("filename", "")
+        )
+        
+        # Get the URI path for display
+        display_path = self._replace_prefix(file_path)
+
         return {
             ATTR_ALBUM_NAME: media_info.get("album_name"),
             ATTR_YEAR: media_info.get("year"),
             ATTR_MONTH: media_info.get("month"),
-            ATTR_MEDIA_PATH: os.path.join(
-                media_info.get("album_path", ""), media_info.get("filename", "")
-            ),
+            ATTR_MEDIA_PATH: file_path,
             ATTR_IMAGE_NAME: media_info.get("filename"),
             ATTR_LAST_SHOWN: media_info.get("last_shown"),
+            ATTR_ENTITY_PICTURE: display_path,
         }

@@ -9,11 +9,15 @@ CONF_EXCLUDE_PATTERN = "exclude_pattern"
 CONF_UPDATE_INTERVAL = "update_interval"
 CONF_IMAGE_EXTENSIONS = "image_extensions"
 CONF_VIDEO_EXTENSIONS = "video_extensions"
+CONF_FILE_SYSTEM_PREFIX = "file_system_prefix"
+CONF_DISPLAY_URI_PREFIX = "display_uri_prefix"
 
 # Default values
 DEFAULT_UPDATE_INTERVAL = 30
 DEFAULT_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
 DEFAULT_VIDEO_EXTENSIONS = [".mp4", ".mov", ".avi", ".mkv", ".webm"]
+DEFAULT_FILE_SYSTEM_PREFIX = "/media"
+DEFAULT_DISPLAY_URI_PREFIX = "media-source://media_source/local/"
 
 # Sensors
 SENSOR_SELECTED_IMAGE = "selected_image"
@@ -44,6 +48,7 @@ ATTR_MONTH = "month"
 ATTR_MEDIA_PATH = "media_path"
 ATTR_LAST_SHOWN = "last_shown"
 ATTR_IMAGE_NAME = "image_name"
+ATTR_ENTITY_PICTURE = "entity_picture"
 ATTR_TIME_RANGE_START_YEAR = "start_year"
 ATTR_TIME_RANGE_START_MONTH = "start_month"
 ATTR_TIME_RANGE_END_YEAR = "end_year"
