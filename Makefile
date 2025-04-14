@@ -47,7 +47,7 @@ ha-core:
 	@echo "$(GREEN)Setting up Home Assistant core repository...$(NC)"
 	@if [ ! -d "$(HA_CORE_DIR)" ]; then \
 		echo "$(GREEN)Cloning Home Assistant core repository...$(NC)"; \
-		git clone https://github.com/home-assistant/core.git "$(HA_CORE_DIR)"; \
+		git clone --depth 1 --branch 2025.4.2 https://github.com/home-assistant/core.git "$(HA_CORE_DIR)"; \
 	else \
 		echo "$(YELLOW)Home Assistant core repository already exists, updating...$(NC)"; \
 		cd "$(HA_CORE_DIR)" && git pull; \
