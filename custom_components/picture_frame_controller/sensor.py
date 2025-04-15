@@ -92,7 +92,7 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_{entity_description.key}"
         self._attr_name = f"{entity_description.name}"
         self._attr_has_entity_name = True
-        
+
         # Get prefix configurations
         self._file_system_prefix = config_entry.data.get(
             CONF_FILE_SYSTEM_PREFIX, DEFAULT_FILE_SYSTEM_PREFIX
@@ -103,8 +103,29 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
 
     def _replace_prefix(self, path: str) -> str:
         """Replace file system prefix with display URI prefix."""
-        if path and path.startswith(self._file_system_prefix):
-            return path.replace(self._file_system_prefix, self._display_uri_prefix, 1)
+        if not path:
+            _LOGGER.debug("Cannot replace prefix on empty path")
+            return path
+
+        _LOGGER.debug(
+            "Replacing prefix: '%s' with '%s' in path: '%s'",
+            self._file_system_prefix,
+            self._display_uri_prefix,
+            path,
+        )
+
+        if path.startswith(self._file_system_prefix):
+            new_path = path.replace(
+                self._file_system_prefix, self._display_uri_prefix, 1
+            )
+            _LOGGER.debug("Prefix replaced: '%s'", new_path)
+            return new_path
+
+        _LOGGER.debug(
+            "Path '%s' doesn't start with prefix '%s', no replacement done",
+            path,
+            self._file_system_prefix,
+        )
         return path
 
     @property
@@ -128,25 +149,24 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
             return self.coordinator.data.get("count_unseen", 0)
 
         return None
-        
+
     @property
     def entity_picture(self) -> Optional[str]:
         """Return entity picture for the selected image."""
         if self.entity_description.key != SENSOR_SELECTED_IMAGE:
             return None
-            
+
         if not self.coordinator.data:
             return None
-            
+
         media_info = self.coordinator.data.get("selected_media")
         if not media_info:
             return None
-            
+
         full_path = os.path.join(
-            media_info.get("album_path", ""), 
-            media_info.get("filename", "")
+            media_info.get("album_path", ""), media_info.get("filename", "")
         )
-        
+
         # Convert filesystem path to display URI
         return self._replace_prefix(full_path)
 
@@ -167,7 +187,7 @@ class PictureFrameSensor(CoordinatorEntity, SensorEntity):
         file_path = os.path.join(
             media_info.get("album_path", ""), media_info.get("filename", "")
         )
-        
+
         # Get the URI path for display
         display_path = self._replace_prefix(file_path)
 

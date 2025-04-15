@@ -1,4 +1,5 @@
 """The Picture Frame Controller integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -31,9 +32,13 @@ from .const import (
     CONF_MEDIA_PATHS,
     CONF_UPDATE_INTERVAL,
     CONF_VIDEO_EXTENSIONS,
+    CONF_FILE_SYSTEM_PREFIX,
+    CONF_DISPLAY_URI_PREFIX,
     DEFAULT_IMAGE_EXTENSIONS,
     DEFAULT_UPDATE_INTERVAL,
     DEFAULT_VIDEO_EXTENSIONS,
+    DEFAULT_FILE_SYSTEM_PREFIX,
+    DEFAULT_DISPLAY_URI_PREFIX,
     DOMAIN,
     SERVICE_CLEAR_ALBUM_FILTER,
     SERVICE_CLEAR_TIME_RANGE,
@@ -66,6 +71,12 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(
                     CONF_VIDEO_EXTENSIONS, default=DEFAULT_VIDEO_EXTENSIONS
                 ): vol.All(cv.ensure_list, [cv.string]),
+                vol.Optional(
+                    CONF_FILE_SYSTEM_PREFIX, default=DEFAULT_FILE_SYSTEM_PREFIX
+                ): cv.string,
+                vol.Optional(
+                    CONF_DISPLAY_URI_PREFIX, default=DEFAULT_DISPLAY_URI_PREFIX
+                ): cv.string,
             }
         )
     },
@@ -106,10 +117,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_interval = config.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
     image_extensions = config.get(CONF_IMAGE_EXTENSIONS, DEFAULT_IMAGE_EXTENSIONS)
     video_extensions = config.get(CONF_VIDEO_EXTENSIONS, DEFAULT_VIDEO_EXTENSIONS)
-    
+
     # Create database manager
     db_manager = DatabaseManager(hass)
-    
+
     # Create media scanner
     media_scanner = MediaScanner(
         hass,
@@ -119,14 +130,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         image_extensions,
         video_extensions,
     )
-    
+
     # Create coordinator
-    coordinator = PictureFrameCoordinator(
-        hass,
-        db_manager,
-        update_interval
-    )
-    
+    coordinator = PictureFrameCoordinator(hass, db_manager, update_interval)
+
     # Store objects in hass.data
     hass.data[DOMAIN][entry.entry_id] = {
         "db_manager": db_manager,
@@ -134,29 +141,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "coordinator": coordinator,
         "config": config,
     }
-    
+
     # Disabling frontend resources registration for now
     # await register_frontend_resources(hass)
-    
+
     # Register services
     register_services(hass, entry)
-    
+
     # Run initial scan if database is not yet created
     # This is done in a background task to avoid blocking setup
     hass.async_create_task(async_initial_scan(hass, entry))
-    
+
     # Start the update coordinator
     await coordinator.async_config_entry_first_refresh()
-    
+
     # Make sure to close database connection on shutdown
     async def close_db_on_shutdown(_):
         db_manager.close()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, close_db_on_shutdown)
-    
+
     # Set up platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    
+
+    # Register update listener for config entry changes
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
+
     return True
 
 
@@ -166,33 +176,33 @@ async def register_frontend_resources(hass: HomeAssistant) -> None:
     # Get the URL for the frontend resources
     root_path = pathlib.Path(__file__).parent
     frontend_path = root_path / "frontend"
-    
+
     # Register the card module
     module_url = f"/picture_frame_controller-{DOMAIN}.js"
-    
+
     # Create and register a view that serves the resource
     class PictureFrameCardJsView(HomeAssistantView):
         requires_auth = False
         url = module_url
         name = f"picture_frame_controller_js"
-        
+
         async def get(self, request):
             # Handle GET request for the card JS file.
             js_file = frontend_path / "picture-frame-card.js"
             if not js_file.exists():
                 _LOGGER.error(f"Frontend resource not found: {js_file}")
                 return None
-                
+
             with open(js_file, "r") as file:
                 content = file.read()
-            
+
             return content
-    
+
     hass.http.register_view(PictureFrameCardJsView())
-    
+
     # Register the resource with Home Assistant
     add_extra_js_url(hass, module_url)
-    
+
     _LOGGER.info(f"Registered picture-frame-card Lovelace card: {module_url}")
 """
 
@@ -200,23 +210,31 @@ async def register_frontend_resources(hass: HomeAssistant) -> None:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    
+
     if unload_ok:
         hass_data = hass.data[DOMAIN]
         entry_data = hass_data.pop(entry.entry_id)
-        
+
         # Close database connection
         db_manager = entry_data.get("db_manager")
         if db_manager:
             db_manager.close()
-    
+
     return unload_ok
+
+
+async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle options update."""
+    _LOGGER.debug("Config entry options updated, reloading entry")
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 class PictureFrameCoordinator(DataUpdateCoordinator):
     """Class to coordinate picture frame updates."""
 
-    def __init__(self, hass: HomeAssistant, db_manager: DatabaseManager, update_interval: int):
+    def __init__(
+        self, hass: HomeAssistant, db_manager: DatabaseManager, update_interval: int
+    ):
         """Initialize the coordinator."""
         self.db_manager = db_manager
         self._current_media_id = None
@@ -242,24 +260,24 @@ class PictureFrameCoordinator(DataUpdateCoordinator):
             count_total = await self.hass.async_add_executor_job(
                 self.db_manager.get_media_count
             )
-            
+
             # Count unseen media files
             count_unseen = await self.hass.async_add_executor_job(
                 self.db_manager.get_unseen_count, self._album_filter
             )
-            
+
             # Get random unseen media
             selected_media = await self.hass.async_add_executor_job(
                 self._get_next_media
             )
-            
+
             # Mark the selected media as seen if it's new
             if selected_media and selected_media.get("id") != self._current_media_id:
                 self._current_media_id = selected_media["id"]
                 await self.hass.async_add_executor_job(
                     self.db_manager.mark_media_as_seen, selected_media["id"]
                 )
-            
+
             return {
                 "selected_media": selected_media,
                 "count_total": count_total,
@@ -279,13 +297,15 @@ class PictureFrameCoordinator(DataUpdateCoordinator):
             end_year=self._time_range.get("end_year"),
             end_month=self._time_range.get("end_month"),
         )
-        
+
         # If no unseen media found, reset and try again
         if not media:
             # If album filter is set, reset just for this album
             if self._album_filter is not None:
                 self.db_manager.reset_seen_status(album_id=self._album_filter)
-                media = self.db_manager.get_random_unseen_media(album_id=self._album_filter)
+                media = self.db_manager.get_random_unseen_media(
+                    album_id=self._album_filter
+                )
             # If time range filter is set, reset for time range
             elif all(self._time_range.values()):
                 self.db_manager.reset_seen_status(
@@ -305,14 +325,14 @@ class PictureFrameCoordinator(DataUpdateCoordinator):
             else:
                 self.db_manager.reset_seen_status()
                 media = self.db_manager.get_random_unseen_media()
-        
+
         return media
 
     def set_album_filter(self, album_id: Optional[int]) -> None:
         """Set the album filter."""
         self._album_filter = album_id
-        
-        # If the album filter is set to an album with 0 unseen images, 
+
+        # If the album filter is set to an album with 0 unseen images,
         # reset seen status for this album
         if album_id is not None:
             unseen_count = self.db_manager.get_unseen_count(album_id=album_id)
@@ -351,7 +371,7 @@ class PictureFrameCoordinator(DataUpdateCoordinator):
         """Show the previous image."""
         if not self._current_media_id:
             return
-            
+
         # Get previously shown media
         previous_media = await self.hass.async_add_executor_job(
             self.db_manager.get_previously_shown_media,
@@ -362,7 +382,7 @@ class PictureFrameCoordinator(DataUpdateCoordinator):
             self._time_range.get("end_year"),
             self._time_range.get("end_month"),
         )
-        
+
         if previous_media:
             self._current_media_id = previous_media["id"]
             self.data = {
@@ -376,17 +396,17 @@ class PictureFrameCoordinator(DataUpdateCoordinator):
 async def async_initial_scan(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Run an initial scan if database does not exist."""
     _LOGGER.info("Running initial media scan")
-    
+
     entry_data = hass.data[DOMAIN][entry.entry_id]
     media_scanner = entry_data["media_scanner"]
-    
+
     # Run the scan in an executor to avoid blocking
     await hass.async_add_executor_job(media_scanner.scan)
-    
+
     # Update the coordinator after scan
     coordinator = entry_data["coordinator"]
     await coordinator.async_refresh()
-    
+
     _LOGGER.info("Initial media scan completed")
 
 
@@ -408,16 +428,16 @@ def register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
     async def handle_set_album_filter(call: ServiceCall) -> None:
         """Handle set_album_filter service call."""
         album_name = call.data.get(ATTR_ALBUM_NAME)
-        
+
         # Find the album ID by name
         albums = await hass.async_add_executor_job(db_manager.get_albums)
         album_id = None
-        
+
         for album in albums:
             if album["name"] == album_name:
                 album_id = album["id"]
                 break
-                
+
         if album_id is not None:
             coordinator.set_album_filter(album_id)
             await coordinator.async_refresh()
@@ -435,7 +455,7 @@ def register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
         start_month = call.data.get(ATTR_TIME_RANGE_START_MONTH)
         end_year = call.data.get(ATTR_TIME_RANGE_END_YEAR)
         end_month = call.data.get(ATTR_TIME_RANGE_END_MONTH)
-        
+
         if all([start_year, start_month, end_year, end_month]):
             coordinator.set_time_range(start_year, start_month, end_year, end_month)
             await coordinator.async_refresh()
@@ -457,9 +477,17 @@ def register_services(hass: HomeAssistant, entry: ConfigEntry) -> None:
     # Register services
     hass.services.async_register(DOMAIN, SERVICE_NEXT_IMAGE, handle_next_image)
     hass.services.async_register(DOMAIN, SERVICE_PREVIOUS_IMAGE, handle_previous_image)
-    hass.services.async_register(DOMAIN, SERVICE_SET_ALBUM_FILTER, handle_set_album_filter)
-    hass.services.async_register(DOMAIN, SERVICE_CLEAR_ALBUM_FILTER, handle_clear_album_filter)
+    hass.services.async_register(
+        DOMAIN, SERVICE_SET_ALBUM_FILTER, handle_set_album_filter
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_CLEAR_ALBUM_FILTER, handle_clear_album_filter
+    )
     hass.services.async_register(DOMAIN, SERVICE_SET_TIME_RANGE, handle_set_time_range)
-    hass.services.async_register(DOMAIN, SERVICE_CLEAR_TIME_RANGE, handle_clear_time_range)
-    hass.services.async_register(DOMAIN, SERVICE_RESET_SEEN_STATUS, handle_reset_seen_status)
+    hass.services.async_register(
+        DOMAIN, SERVICE_CLEAR_TIME_RANGE, handle_clear_time_range
+    )
+    hass.services.async_register(
+        DOMAIN, SERVICE_RESET_SEEN_STATUS, handle_reset_seen_status
+    )
     hass.services.async_register(DOMAIN, SERVICE_SCAN_MEDIA, handle_scan_media)

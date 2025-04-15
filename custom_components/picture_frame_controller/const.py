@@ -21,7 +21,7 @@ DEFAULT_DISPLAY_URI_PREFIX = "media-source://media_source/local/"
 
 # Sensors
 SENSOR_SELECTED_IMAGE = "selected_image"
-SENSOR_COUNT_IMAGE = "count_image" 
+SENSOR_COUNT_IMAGE = "count_image"
 SENSOR_COUNT_UNSEEN = "count_unseen"
 
 # Database
